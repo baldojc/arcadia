@@ -8,6 +8,7 @@ import Link from "next/link";
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true); // 1. ADD LOADING STATE
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function Dashboard() {
           localStorage.setItem("dailyju_avatar", profileData.avatar_url || "");
         }
       }
+      setIsLoading(false); // 2. SET LOADING TO FALSE AFTER CHECK
     };
     getUser();
   }, [router]);
@@ -38,6 +40,14 @@ export default function Dashboard() {
     await supabase.auth.signOut();
     router.push("/login");
   };
+  // 3. SHOW A SLEEK LOADING SCREEN INSTEAD OF THE "OPERATOR" FLASH
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-emerald-500 font-mono">
+        <p className="animate-pulse">Decrypting Profile Data...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
