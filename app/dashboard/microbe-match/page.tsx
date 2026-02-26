@@ -19,12 +19,14 @@ export default function MicrobeMatchPage() {
   const [matches, setMatches] = useState(0);
   const [themeName, setThemeName] = useState("emerald");
   const [bg, setBg] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize Game & Theme on Load
   useEffect(() => {
     setThemeName(localStorage.getItem("dailyju_theme") || "emerald");
     setBg(localStorage.getItem("dailyju_bg") || "");
     initializeGame();
+    setIsLoading(false);
   }, []);
 
   const initializeGame = () => {
@@ -94,6 +96,15 @@ export default function MicrobeMatchPage() {
 
   const theme = getThemeClasses(themeName);
   const isGameWon = matches === 8;
+
+  // --- ADDED LOADING OVERLAY ---
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 font-mono text-xs text-zinc-500 tracking-widest">
+        <p className="animate-pulse">INITIALIZING MODULE...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans relative flex flex-col p-4 md:p-8">

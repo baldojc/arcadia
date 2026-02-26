@@ -14,9 +14,11 @@ export default function NeonGridPage() {
   const [themeName, setThemeName] = useState("emerald");
   const [bg, setBg] = useState("");
   const [profile, setProfile] = useState<any>(null);
+  
+  // 1. ADDED LOADING STATE
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
-    // 1. Fetch User Profile for Custom Name
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -27,19 +29,21 @@ export default function NeonGridPage() {
           .single();
         if (data) setProfile(data);
       }
+      
+      setThemeName(localStorage.getItem("dailyju_theme") || "emerald");
+      setBg(localStorage.getItem("dailyju_bg") || "");
+      
+      // 2. TURN OFF LOADING ONCE DATA IS FETCHED
+      setIsLoading(false);
     };
     
     fetchProfile();
-    
-    // 2. Fetch Cached Themes
-    setThemeName(localStorage.getItem("dailyju_theme") || "emerald");
-    setBg(localStorage.getItem("dailyju_bg") || "");
   }, []);
 
   const WIN_LINES = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-    [0, 4, 8], [2, 4, 6]             // Diagonals
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]            
   ];
 
   const checkWinner = (squares: Player[]) => {
@@ -53,26 +57,20 @@ export default function NeonGridPage() {
     return null;
   };
 
-  // 🤖 SYSTEM AI LOGIC
   useEffect(() => {
     if (!isPlayerTurn && !winner) {
       const timer = setTimeout(() => {
         makeAIMove();
-      }, 600); // 600ms delay feels like the computer is "thinking"
+      }, 600);
       return () => clearTimeout(timer);
     }
   }, [isPlayerTurn, winner]);
 
   const makeAIMove = () => {
     const newBoard = [...board];
-    
-    // 1. Try to Win
     let move = findWinningMove(newBoard, 'O');
-    // 2. Try to Block Player
     if (move === null) move = findWinningMove(newBoard, 'X');
-    // 3. Take Center if available
     if (move === null && newBoard[4] === null) move = 4;
-    // 4. Take Random available space
     if (move === null) {
       const available = newBoard.map((val, idx) => val === null ? idx : null).filter(val => val !== null) as number[];
       move = available[Math.floor(Math.random() * available.length)];
@@ -132,9 +130,16 @@ export default function NeonGridPage() {
   };
 
   const theme = getThemeClasses(themeName);
-  
-  // SECURE CUSTOM NAME (Defaults to OPERATOR if no name is set)
   const playerName = profile?.display_name ? profile.display_name.toUpperCase() : "OPERATOR";
+
+  // 3. ADDED THE LOADING SCREEN OVERLAY
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 font-mono text-xs text-zinc-500 tracking-widest">
+        <p className="animate-pulse">INITIALIZING MODULE...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans relative flex flex-col p-4 md:p-8">
@@ -148,7 +153,6 @@ export default function NeonGridPage() {
 
       <div className="relative z-10 max-w-3xl mx-auto w-full flex-1 flex flex-col">
         
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-zinc-800 pb-6">
           <div>
             <Link href="/dashboard" className={`text-xs font-mono text-zinc-400 hover:${theme.text} mb-4 inline-flex items-center gap-2 transition-colors`}>
@@ -170,7 +174,6 @@ export default function NeonGridPage() {
           </div>
         </div>
 
-        {/* GAME BOARD */}
         <div className="flex-1 flex flex-col items-center justify-center relative">
           
           {winner && (
@@ -210,7 +213,6 @@ export default function NeonGridPage() {
 
         </div>
 
-        {/* FOOTER ACTIONS */}
         <div className="mt-12 flex justify-center">
           <button 
             onClick={resetGame} 
